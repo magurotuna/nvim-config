@@ -140,9 +140,15 @@ require('packer').startup(function (use)
     'kevinhwang91/nvim-bqf',
     ft = 'qf'
   }
+
+  -- autosave
+  use 'Pocco81/auto-save.nvim'
+
+  -- autoclose
+  use 'm4xshen/autoclose.nvim'
 end)
 
-vim.cmd('colorscheme kanagawa-paper')
+vim.cmd('colorscheme kanagawa')
 require('transparent').setup()
 
 -- lualine
@@ -359,5 +365,11 @@ require('nvim-treesitter.configs').setup {
   },
   highlight = {
     enable = true,
-  }
+  },
 }
+
+-- autosave
+require('auto-save').setup()
+
+-- autoclose
+require('autoclose').setup()

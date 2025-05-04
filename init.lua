@@ -1,3 +1,20 @@
+-- Bootstrap lazy.nvim
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not (vim.uv or vim.loop).fs_stat(lazypath) then
+  local lazyrepo = "https://github.com/folke/lazy.nvim.git"
+  local out = vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable", lazyrepo, lazypath })
+  if vim.v.shell_error ~= 0 then
+    vim.api.nvim_echo({
+      { "Failed to clone lazy.nvim:\n", "ErrorMsg" },
+      { out, "WarningMsg" },
+      { "\nPress any key to exit..." },
+    }, true, {})
+    vim.fn.getchar()
+    os.exit(1)
+  end
+end
+vim.opt.rtp:prepend(lazypath)
+
 vim.g.mapleader = ' '
 
 vim.api.nvim_command('filetype plugin indent on')
@@ -76,215 +93,7 @@ vim.keymap.set('c', '<C-p>', '<Up>', { noremap = true })
 vim.keymap.set('c', '<M-b>', '<S-Left>', { noremap = true })
 vim.keymap.set('c', '<M-f>', '<S-Right>', { noremap = true })
 
-vim.cmd([[packadd packer.nvim]])
-
-require('packer').startup(function (use)
-  use 'wbthomason/packer.nvim'
-
-  use { 'nvim-treesitter/nvim-treesitter', run = ':TSUpdate' }
-
-  -- lsp
-  use 'neovim/nvim-lspconfig'
-
-  -- language server management
-  use 'williamboman/mason.nvim'
-  use 'williamboman/mason-lspconfig.nvim'
-
-  -- wrapper to easily integrate "format-on-save" feature
-  use "lukas-reineke/lsp-format.nvim"
-
-  -- completion
-  use 'hrsh7th/nvim-cmp'
-  use 'hrsh7th/cmp-nvim-lsp'
-  use 'hrsh7th/cmp-buffer'
-  use 'hrsh7th/cmp-path'
-
-  use {
-    'nvim-telescope/telescope.nvim',
-    tag = '0.1.8',
-    requires = { {'nvim-lua/plenary.nvim'} }
-  }
-
-  -- colorscheme
-  use 'EdenEast/nightfox.nvim'
-  use 'rebelot/kanagawa.nvim'
-  use 'sho-87/kanagawa-paper.nvim'
-
-  use 'xiyaowong/nvim-transparent'
-
-  -- lualine
-  use {
-    'nvim-lualine/lualine.nvim',
-    requires = { 'kyazdani42/nvim-web-devicons', opt = true }
-  }
-  use 'arkav/lualine-lsp-progress'
-
-  use {
-    'andymass/vim-matchup',
-    setup = function ()
-      vim.g.matchup_matchparen_offscreen = { method = "popup" }
-    end
-  }
-
-  use 'lukas-reineke/indent-blankline.nvim'
-
-  use 'windwp/nvim-ts-autotag'
-
-  use 'lambdalisue/fern.vim'
-
-  use 'lewis6991/gitsigns.nvim'
-  use 'dinhhuy258/git.nvim'
-
-  -- Make quickfix window better
-  use {
-    'kevinhwang91/nvim-bqf',
-    ft = 'qf'
-  }
-
-  -- autosave
-  use 'Pocco81/auto-save.nvim'
-
-  -- autoclose
-  use 'm4xshen/autoclose.nvim'
-
-  -- copilot
-  use {
-    'zbirenbaum/copilot.lua',
-    cmd = "Copilot",
-    event = "InsertEnter",
-    config = function ()
-      require('copilot').setup({
-        suggestion = { enabled = false },
-        panel = { enabled = false },
-      })
-    end,
-  }
-  use {
-    'zbirenbaum/copilot-cmp',
-    after = { 'copilot.lua' },
-    config = function ()
-      require('copilot_cmp').setup()
-    end,
-  }
-end)
-
-vim.cmd('colorscheme kanagawa')
-require('transparent').setup()
-
--- lualine
-require('lualine').setup {
-  sections = {
-    lualine_c = {
-      { 'filename', path = 1 },
-      'lsp_progress',
-    },
-  },
-}
-
--- gitsigns
-require('gitsigns').setup()
-
--- git.nvim
-require('git').setup {
-  keymaps = {
-    blame = '<leader>gb',
-    browse = '<leader>go',
-  },
-}
-
--- indent-blankline.nvim
-require('ibl').setup()
-
--- highlight yanked region
-vim.cmd('au TextYankPost * silent! lua vim.highlight.on_yank { timeout = 500 }')
-
-require('nvim-ts-autotag').setup({
-  opts = {
-    enable_close = true,
-    enable_rename = true,
-    enable_close_on_slash = true,
-  }
-})
-
--- fern.vim
-vim.keymap.set('n', '<leader>n', ':<C-u>Fern . -reveal=%<CR>', { noremap = true, silent = true })
-vim.g['fern#disable_default_mappings'] = 1
-vim.g['fern#default_hidden'] = 1
-local fern_custom_id = vim.api.nvim_create_augroup('fern-custom', { clear = true })
-vim.api.nvim_create_autocmd('FileType', {
-  pattern =  'fern',
-  callback = function ()
-    vim.keymap.set('n', 'N', '<Plug>(fern-action-new-file)', { buffer = true })
-    vim.keymap.set('n', 'K', '<Plug>(fern-action-new-dir)', { buffer = true })
-    vim.keymap.set('n', 'c', '<Plug>(fern-action-copy)', { buffer = true })
-    vim.keymap.set('n', 'm', '<Plug>(fern-action-move)', { buffer = true })
-    vim.keymap.set('n', 'r', '<Plug>(fern-action-rename)', { buffer = true })
-    vim.keymap.set('n', 'R', '<Plug>(fern-action-remove)', { buffer = true })
-    vim.keymap.set('n', '<CR>', '<Plug>(fern-action-open-or-enter)', { buffer = true })
-    vim.keymap.set('n', '-', '<Plug>(fern-action-mark:toggle)', { buffer = true })
-    vim.keymap.set('v', '-', '<Plug>(fern-action-mark:toggle)', { buffer = true })
-  end,
-  group = fern_custom_id,
-})
-
--- telescope
-local telescope_builtin = require('telescope.builtin')
-vim.keymap.set('n', '<C-p>', telescope_builtin.find_files, {})
-vim.keymap.set('n', '<leader>s', telescope_builtin.live_grep, {})
-vim.keymap.set('n', '<leader>;', telescope_builtin.buffers, {})
-local actions = require('telescope.actions')
-local my_mappings = {
-  ['<C-j>'] = {
-    actions.move_selection_next,
-    type = 'action',
-    opts = { nowait = true, silent = true },
-  },
-  ['<C-k>'] = {
-    actions.move_selection_previous,
-    type = 'action',
-    opts = { nowait = true, silent = true },
-  },
-  ['<C-[>'] = {
-    actions.close,
-    type = 'action',
-    opts = { nowait = true, silent = true },
-  },
-}
-require('telescope').setup {
-  defaults = {
-    layout_strategy = 'vertical',
-    mappings = {
-      i = my_mappings,
-      n = my_mappings,
-    },
-  },
-}
-
--- lsp-format
-require('lsp-format').setup()
-
--- lsp
-local nvim_lsp = require('lspconfig')
-require('mason').setup()
-require('mason-lspconfig').setup {
-  ensure_installed = {
-    'lua_ls',
-    'rust_analyzer',
-    'clangd',
-    'denols',
-    'tsserver',
-    'zls',
-  },
-}
 local lsp_keymap_opt = { noremap = true, silent = true }
-
--- Some telescope functions are disabled because there is an issue with Deno LSP
--- https://github.com/nvim-telescope/telescope.nvim/issues/2768
--- vim.keymap.set('n', 'gd', telescope_builtin.lsp_definitions, lsp_keymap_opt)
--- vim.keymap.set('n', 'gi', telescope_builtin.lsp_implementations, lsp_keymap_opt)
--- vim.keymap.set('n', 'gy', telescope_builtin.lsp_type_definitions, lsp_keymap_opt)
--- vim.keymap.set('n', 'gr', telescope_builtin.lsp_references, lsp_keymap_opt)
-
 vim.keymap.set('n', 'gd', vim.lsp.buf.definition, lsp_keymap_opt)
 vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, lsp_keymap_opt)
 vim.keymap.set('n', 'gy', vim.lsp.buf.type_definition, lsp_keymap_opt)
@@ -292,105 +101,245 @@ vim.keymap.set('n', '<space>rn', vim.lsp.buf.rename, lsp_keymap_opt)
 vim.keymap.set('n', '<space>a', vim.lsp.buf.code_action, lsp_keymap_opt)
 vim.keymap.set('n', 'gr', vim.lsp.buf.references, lsp_keymap_opt)
 vim.keymap.set('n', 'gh', vim.lsp.buf.hover, lsp_keymap_opt)
-vim.keymap.set('n', 'gq', telescope_builtin.diagnostics, lsp_keymap_opt)
-require('mason-lspconfig').setup_handlers {
-  function (server_name)
-    local lsp_opt = {
-      on_attach = function (client, bufnr)
-        -- if the language server supports formatting, it is invoked on save
-        require('lsp-format').on_attach(client)
 
-        -- Do something more
+require('lazy').setup({
+  spec = {
+    {
+      "folke/tokyonight.nvim",
+      lazy = false, -- make sure we load this during startup if it is your main colorscheme
+      priority = 1000, -- make sure to load this before all the other start plugins
+      config = function()
+        -- load the colorscheme here
+        vim.cmd([[colorscheme tokyonight]])
       end,
-      capabilities = require('cmp_nvim_lsp').default_capabilities(
-        vim.lsp.protocol.make_client_capabilities()
-      ),
-    }
+    },
+    {
+      "nvim-treesitter/nvim-treesitter",
+      build = ":TSUpdate",
+      cond = not vim.g.vscode,
+    },
+    { "neovim/nvim-lspconfig", cond = not vim.g.vscode },
+    { "williamboman/mason.nvim", cond = not vim.g.vscode },
+    { "williamboman/mason-lspconfig.nvim", cond = not vim.g.vscode },
+    { "williamboman/mason-lspconfig.nvim", cond = not vim.g.vscode },
+    {
+      "nvim-telescope/telescope.nvim", tag = "0.1.8",
+      dependencies = { "nvim-lua/plenary.nvim" },
+      cond = not vim.g.vscode,
+    },
+    { "lukas-reineke/lsp-format.nvim", cond = not vim.g.vscode },
+    { "hrsh7th/nvim-cmp", cond = not vim.g.vscode },
+    { "hrsh7th/cmp-nvim-lsp", cond = not vim.g.vscode },
+    { "hrsh7th/cmp-buffer", cond = not vim.g.vscode },
+    { "hrsh7th/cmp-path", cond = not vim.g.vscode },
+    {
+      "nvim-lualine/lualine.nvim",
+      dependencies = {
+        { "kyazdani42/nvim-web-devicons" },
+      },
+      cond = not vim.g.vscode,
+    },
+    { "arkav/lualine-lsp-progress", cond = not vim.g.vscode },
+    { "lukas-reineke/indent-blankline.nvim", cond = not vim.g.vscode },
+    { "lambdalisue/fern.vim", cond = not vim.g.vscode },
+    { "lewis6991/gitsigns.nvim", cond = not vim.g.vscode },
+    { "dinhhuy258/git.nvim", cond = not vim.g.vscode },
+  },
+  install = { colorscheme = { "habamax" } },
+  -- automatically check for plugin updates
+  checker = { enabled = true },
+})
 
-    local node_root_dir = nvim_lsp.util.root_pattern('package.json', 'tsconfig.json', 'node_modules')
-    local is_node_repo = node_root_dir(vim.fn.getcwd()) ~= nil
-    local deno_root_dir = nvim_lsp.util.root_pattern('deno.json', 'deno.jsonc', 'import_map.json')
-    local is_deno_repo = deno_root_dir(vim.fn.getcwd()) ~= nil
+if vim.g.vscode then
+    -- VSCode extension
+else
+  -- lualine
+  require('lualine').setup {
+    sections = {
+      lualine_c = {
+        { 'filename', path = 1 },
+        'lsp_progress',
+      },
+    },
+  }
+  -- gitsigns
+  require('gitsigns').setup()
+  -- git.nvim
+  require('git').setup {
+    keymaps = {
+      blame = '<leader>gb',
+      browse = '<leader>go',
+    },
+  }
+  -- indent-blankline.nvim
+  require('ibl').setup()
+  -- fern.vim
+  vim.keymap.set('n', '<leader>n', ':<C-u>Fern . -reveal=%<CR>', { noremap = true, silent = true })
+  vim.g['fern#disable_default_mappings'] = 1
+  vim.g['fern#default_hidden'] = 1
+  local fern_custom_id = vim.api.nvim_create_augroup('fern-custom', { clear = true })
+  vim.api.nvim_create_autocmd('FileType', {
+    pattern =  'fern',
+    callback = function ()
+      vim.keymap.set('n', 'N', '<Plug>(fern-action-new-file)', { buffer = true })
+      vim.keymap.set('n', 'K', '<Plug>(fern-action-new-dir)', { buffer = true })
+      vim.keymap.set('n', 'c', '<Plug>(fern-action-copy)', { buffer = true })
+      vim.keymap.set('n', 'm', '<Plug>(fern-action-move)', { buffer = true })
+      vim.keymap.set('n', 'r', '<Plug>(fern-action-rename)', { buffer = true })
+      vim.keymap.set('n', 'R', '<Plug>(fern-action-remove)', { buffer = true })
+      vim.keymap.set('n', '<CR>', '<Plug>(fern-action-open-or-enter)', { buffer = true })
+      vim.keymap.set('n', '-', '<Plug>(fern-action-mark:toggle)', { buffer = true })
+      vim.keymap.set('v', '-', '<Plug>(fern-action-mark:toggle)', { buffer = true })
+    end,
+    group = fern_custom_id,
+  })
+  -- telescope
+  local telescope_builtin = require('telescope.builtin')
+  vim.keymap.set('n', '<C-p>', telescope_builtin.find_files, {})
+  vim.keymap.set('n', '<leader>s', telescope_builtin.live_grep, {})
+  vim.keymap.set('n', '<leader>;', telescope_builtin.buffers, {})
+  local actions = require('telescope.actions')
+  local my_mappings = {
+    ['<C-j>'] = {
+      actions.move_selection_next,
+      type = 'action',
+      opts = { nowait = true, silent = true },
+    },
+    ['<C-k>'] = {
+      actions.move_selection_previous,
+      type = 'action',
+      opts = { nowait = true, silent = true },
+    },
+    ['<C-[>'] = {
+      actions.close,
+      type = 'action',
+      opts = { nowait = true, silent = true },
+    },
+  }
+  require('telescope').setup {
+    defaults = {
+      layout_strategy = 'vertical',
+      mappings = {
+        i = my_mappings,
+        n = my_mappings,
+      },
+    },
+  }
+  -- lsp-format
+  require('lsp-format').setup()
+  -- lsp
+  local nvim_lsp = require('lspconfig')
+  require('mason').setup()
+  require('mason-lspconfig').setup {
+    ensure_installed = {
+      'lua_ls',
+      'rust_analyzer',
+      'clangd',
+      'denols',
+      'ts_ls',
+      'zls',
+    },
+  }
+  vim.keymap.set('n', 'gd', vim.lsp.buf.definition, lsp_keymap_opt)
+  vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, lsp_keymap_opt)
+  vim.keymap.set('n', 'gy', vim.lsp.buf.type_definition, lsp_keymap_opt)
+  vim.keymap.set('n', '<space>rn', vim.lsp.buf.rename, lsp_keymap_opt)
+  vim.keymap.set('n', '<space>a', vim.lsp.buf.code_action, lsp_keymap_opt)
+  vim.keymap.set('n', 'gr', vim.lsp.buf.references, lsp_keymap_opt)
+  vim.keymap.set('n', 'gh', vim.lsp.buf.hover, lsp_keymap_opt)
+  vim.keymap.set('n', 'gq', telescope_builtin.diagnostics, lsp_keymap_opt)
+  require('mason-lspconfig').setup_handlers {
+    function (server_name)
+      local lsp_opt = {
+        on_attach = function (client, bufnr)
+          -- if the language server supports formatting, it is invoked on save
+          require('lsp-format').on_attach(client)
 
-    if server_name == 'tsserver' then
-      if is_node_repo then
-        lsp_opt.root_dir = node_root_dir
-      else
-        return
+          -- Do something more
+        end,
+        capabilities = require('cmp_nvim_lsp').default_capabilities(
+          vim.lsp.protocol.make_client_capabilities()
+        ),
+      }
+
+      local node_root_dir = nvim_lsp.util.root_pattern('package.json', 'tsconfig.json', 'node_modules')
+      local is_node_repo = node_root_dir(vim.fn.getcwd()) ~= nil
+      local deno_root_dir = nvim_lsp.util.root_pattern('deno.json', 'deno.jsonc', 'import_map.json')
+      local is_deno_repo = deno_root_dir(vim.fn.getcwd()) ~= nil
+
+      if server_name == 'ts_ls' then
+        if is_node_repo then
+          lsp_opt.root_dir = node_root_dir
+        else
+          return
+        end
       end
-    end
 
-    if server_name == 'denols' then
-      if is_deno_repo then
-        lsp_opt.root_dir = deno_root_dir
-        lsp_opt.init_options = {
-          enable = true,
-          lint = true,
-          unstable = true,
-        }
-      else
-        return
+      if server_name == 'denols' then
+        if is_deno_repo then
+          lsp_opt.root_dir = deno_root_dir
+          lsp_opt.init_options = {
+            enable = true,
+            lint = true,
+            unstable = true,
+          }
+        else
+          return
+        end
       end
-    end
 
-    nvim_lsp[server_name].setup(lsp_opt)
-  end,
+      nvim_lsp[server_name].setup(lsp_opt)
+    end,
 
-  ['lua_ls'] = function ()
-    nvim_lsp.lua_ls.setup {
-      settings = {
-        Lua = {
-          diagnostics = {
-            globals = { 'vim' },
+    ['lua_ls'] = function ()
+      nvim_lsp.lua_ls.setup {
+        settings = {
+          Lua = {
+            diagnostics = {
+              globals = { 'vim' },
+            },
           },
         },
-      },
-    }
-  end
-}
-
-local cmp = require('cmp')
--- completion
-cmp.setup {
-  mapping = {
-    ['<C-j>'] = cmp.mapping.select_next_item(),
-    ['<C-n>'] = cmp.mapping.select_next_item(),
-    ['<C-k>'] = cmp.mapping.select_prev_item(),
-    ['<C-p>'] = cmp.mapping.select_prev_item(),
-    ['<CR>'] = cmp.mapping.confirm({ select = true }),
-    ['<Tab>'] = cmp.mapping.confirm({ select = true }),
-    ['C-['] = cmp.mapping.close(),
-  },
-  sources = {
-    { name = 'nvim_lsp' },
-    { name = 'buffer' },
-    { name = 'path' },
-    { name = "copilot" },
+      }
+    end
   }
-}
+  local cmp = require('cmp')
+  -- completion
+  cmp.setup {
+    mapping = {
+      ['<C-j>'] = cmp.mapping.select_next_item(),
+      ['<C-n>'] = cmp.mapping.select_next_item(),
+      ['<C-k>'] = cmp.mapping.select_prev_item(),
+      ['<C-p>'] = cmp.mapping.select_prev_item(),
+      ['<CR>'] = cmp.mapping.confirm({ select = true }),
+      ['<Tab>'] = cmp.mapping.confirm({ select = true }),
+      ['C-['] = cmp.mapping.close(),
+    },
+    sources = {
+      { name = 'nvim_lsp' },
+      { name = 'buffer' },
+      { name = 'path' },
+      { name = "copilot" },
+    }
+  }
 
--- treesitter
-require('nvim-treesitter.configs').setup {
-  ensure_installed = {
-    "typescript",
-    "tsx",
-    "go",
-    "rust",
-    "cpp",
-    "yaml",
-    "lua",
-    "vimdoc",
-    "vue",
-    "json",
-    "markdown",
-  },
-  highlight = {
-    enable = true,
-  },
-}
-
--- autosave
-require('auto-save').setup()
-
--- autoclose
-require('autoclose').setup()
+  -- treesitter
+  require('nvim-treesitter.configs').setup {
+    ensure_installed = {
+      "typescript",
+      "tsx",
+      "go",
+      "rust",
+      "cpp",
+      "yaml",
+      "lua",
+      "vimdoc",
+      "vue",
+      "json",
+      "markdown",
+    },
+    highlight = {
+      enable = true,
+    },
+  }
+end
